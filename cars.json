@@ -1,0 +1,12 @@
+[
+  { "name": "Nuke", "mac": "EA:5E:FF:E0:9A:AC", "image": "nuke.png" },
+  { "name": "Nuke Phantom", "mac": "FA:40:38:58:7D:1A", "image": "nuke_phantom.png" },
+  { "name": "X52 Truck", "mac": "C1:89:08:E3:CB:4E", "image": "x52.png" },
+  { "name": "Freewheel", "mac": "EA:B3:0E:8A:03:9A", "image": "freewheel.png" },
+  { "name": "X52 ICE", "mac": "E5:FF:82:ED:F4:94", "image": "x52_ice.png" },
+  { "name": "Guardian", "mac": "C6:AC:02:A3:AF:4C", "image": "guardian.png" },
+  { "name": "Thermo", "mac": "C2:F9:13:11:7C:77", "image": "thermo.png" },
+  { "name": "Big Bang", "mac": "F4:30:24:C9:0B:D1", "image": "big_bang.png" },
+  { "name": "MXT", "mac": "E7:B1:1A:E7:92:D5", "image": "mxt.png" },
+  { "name": "Ice Charger", "mac": "D1:98:BC:9E:EA:9F", "image": "charger.png" }
+]

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Anki Overdrive Controller</title>
+    <link rel="stylesheet" href="/static/css/anki-theme.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Anki Overdrive - Controller</h1>
+        <p>Car MAC: <strong>{{ car_mac }}</strong></p>
+
+        <div class="controls">
+            <button onclick="sendCommand('start')">Start</button>
+            <button onclick="sendCommand('stop')">Stop</button>
+            <button onclick="sendCommand('boost')">Boost</button>
+            <button onclick="sendCommand('powerup')">Power-Up</button>
+            <button onclick="scanTrack()">Scan Track</button>
+        </div>
+
+        <hr>
+
+        <h2>Race Status</h2>
+        <ul id="race-status"></ul>
+        <button id="position-btn" onclick="positionAll()">🚘 Zet auto's klaar</button>
+        <button id="start-btn" onclick="startRace()" disabled>🏁 Start Race</button>
+    </div>
+
+    <script>
+        const playerId = {{ player_id }};
+        const carMac = "{{ car_mac }}";
+
+        function sendCommand(command) {
+            fetch(`/api/send/${playerId}/${command}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ car_mac: carMac })
+            }).then(response => {
+                if (!response.ok) {
+                    alert("Fout bij verzenden van commando: " + command);
+                }
+            });
+        }
+
+        function scanTrack() {
+            fetch(`/api/scan_track?car_mac=${carMac}`, {
+                method: 'POST'
+            }).then(response => {
+                if (!response.ok) {
+                    alert("Fout bij track scan!");
+                }
+            });
+        }
+
+        function positionAll() {
+            fetch("/api/race/position_all", {
+                method: "POST"
+            }).then(res => {
+                if (res.ok) {
+                    alert("🚘 Auto's worden gepositioneerd...");
+                    setTimeout(fetchStatus, 5000);
+                } else {
+                    alert("❌ Positioneren mislukt.");
+                }
+            });
+        }
+
+        function startRace() {
+            fetch("/api/race/start", {
+                method: "POST"
+            }).then(res => {
+                if (res.ok) {
+                    alert("🏁 Race gestart!");
+                } else {
+                    alert("❌ Start mislukt.");
+                }
+            });
+        }
+
+        function fetchStatus() {
+            fetch("/api/race/status")
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById("race-status");
+                    list.innerHTML = "";
+                    data.cars.forEach(car => {
+                        const li = document.createElement("li");
+                        li.textContent = `${car.name} (${car.player_type}) - ${car.status}`;
+                        list.appendChild(li);
+                    });
+
+                    document.getElementById("start-btn").disabled = !data.ready;
+                });
+        }
+
+        setInterval(fetchStatus, 3000);
+    </script>
+</body>
+</html>

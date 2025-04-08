@@ -1,0 +1,14 @@
+{
+  "anki": {
+    "powerups": true,
+    "track_scan_laps": 2,
+    "default_speed": 500,
+    "slow_speed": 200,
+    "stop_threshold_mm": 180,
+    "start_position": 6
+  },
+  "server": {
+    "port": 5000,
+    "host": "0.0.0.0"
+  }
+}

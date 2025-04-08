@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Anki Overdrive Setup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anki-theme.css') }}">
+    <style>
+        .car-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .car-card {
+            border: 3px solid #ccc;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            width: 160px;
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+
+        .car-card.selected {
+            border-color: #2196F3;
+            background-color: #e0f0ff;
+        }
+
+        .car-card img {
+            width: 120px;
+            height: auto;
+        }
+
+        .action-buttons {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .action-buttons form {
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        .action-buttons button {
+            padding: 12px 24px;
+            font-size: 16px;
+        }
+
+        .race-list {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .race-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">🚗 Anki Overdrive Setup</h1>
+
+    <div class="car-grid">
+        {% for car in cars %}
+        <div class="car-card" onclick="selectCar('{{ car.mac }}', '{{ car.name }}', this)">
+            <img src="{{ url_for('static', filename='img/' ~ car.image) }}" alt="{{ car.name }}">
+            <p><strong>{{ car.name }}</strong></p>
+            <p style="font-size: 12px; color: gray;">{{ car.mac }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-buttons">
+        <!-- Voeg toe aan race -->
+        <button onclick="addToRace()" id="addButton" disabled>➕ Voeg toe aan race</button>
+
+        <!-- Scan track -->
+        <form method="post" action="/api/scan_track" onsubmit="return setCarMacBeforeScan();">
+            <input type="hidden" name="car_mac" id="scanCarMac">
+            <button type="submit" class="scan-button" disabled>🚦 Scan Track</button>
+        </form>
+
+        <!-- Controller Player 1 -->
+        <form method="get" action="/controller/1">
+            <input type="hidden" name="car_mac" id="player1CarMac">
+            <input type="hidden" name="mode" value="race">
+            <input type="hidden" name="laps" value="10">
+            <button type="submit" class="controller-button" disabled>🎮 Player 1 Controller</button>
+        </form>
+
+        <!-- Controller Player 2 -->
+        <form method="get" action="/controller/2">
+            <input type="hidden" name="car_mac" id="player2CarMac">
+            <input type="hidden" name="mode" value="race">
+            <input type="hidden" name="laps" value="10">
+            <button type="submit" class="controller-button" disabled>🎮 Player 2 Controller</button>
+        </form>
+    </div>
+
+    <div class="race-list">
+        <h2>Auto's in de race</h2>
+        <ul id="raceCars"></ul>
+    </div>
+
+    <script>
+        let selectedMac = null;
+        let selectedName = null;
+
+        function selectCar(mac, name, element) {
+            selectedMac = mac;
+            selectedName = name;
+
+            document.getElementById('scanCarMac').value = mac;
+            document.getElementById('player1CarMac').value = mac;
+            document.getElementById('player2CarMac').value = mac;
+
+            document.querySelectorAll('.car-card').forEach(card => card.classList.remove('selected'));
+            element.classList.add('selected');
+
+            document.querySelectorAll('.scan-button, .controller-button').forEach(btn => {
+                btn.disabled = false;
+            });
+
+            document.getElementById('addButton').disabled = false;
+        }
+
+        function setCarMacBeforeScan() {
+            if (!selectedMac) {
+                alert("⚠️ Kies eerst een auto voordat je de track scant.");
+                return false;
+            }
+            return true;
+        }
+
+        function addToRace() {
+            if (!selectedMac || !selectedName) {
+                alert("Selecteer eerst een auto.");
+                return;
+            }
+
+            const playerType = prompt("Type speler voor deze auto: 'human' of 'ai'", "human") || "human";
+
+            fetch("/api/race/add_car", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    mac: selectedMac,
+                    name: selectedName,
+                    player_type: playerType
+                })
+            }).then(res => {
+                if (res.ok) {
+                    alert("Auto toegevoegd aan race.");
+                    fetchRaceCars();
+                } else {
+                    res.text().then(msg => alert("Fout: " + msg));
+                }
+            });
+        }
+
+        function fetchRaceCars() {
+            fetch("/api/race/status")
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById("raceCars");
+                    list.innerHTML = "";
+                    data.cars.forEach(car => {
+                        const li = document.createElement("li");
+                        li.textContent = `${car.name} (${car.player_type}) - ${car.status}`;
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        window.onload = () => {
+            document.querySelectorAll('.scan-button, .controller-button').forEach(btn => {
+                btn.disabled = true;
+            });
+            fetchRaceCars();
+        };
+
+        setInterval(fetchRaceCars, 3000);
+    </script>
+</body>
+</html>
